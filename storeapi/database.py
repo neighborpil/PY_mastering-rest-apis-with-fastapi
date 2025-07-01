@@ -1,7 +1,7 @@
 import databases
 import sqlalchemy
 import sys
-
+from sqlalchemy import text
 from storeapi.config import config
 
 metadata = sqlalchemy.MetaData()
@@ -19,14 +19,37 @@ comment_table = sqlalchemy.Table(
     sqlalchemy.Column("id", sqlalchemy.Integer, primary_key=True),
     sqlalchemy.Column("body", sqlalchemy.String(255)),
     sqlalchemy.Column("post_id", sqlalchemy.ForeignKey("posts.id"), nullable=False)
-
 )
 
 engine = sqlalchemy.create_engine(
     config.DATABASE_URL,
-    connect_args={"charset": "utf8mb4"}
-    # config.DATABASE_URL, connect_args={"check_same_thread": False}
+    connect_args={
+        "charset": "utf8mb4",
+        "use_unicode": True,
+        "connect_timeout": 10
+    },
+    pool_recycle=3600,
+    pool_size=10,
+    pool_pre_ping=True,
+    max_overflow=20
 )
+
+# SQLAlchemy에서 테이블 생성 시 기본 문자셋과 콜레이션 설정
+@sqlalchemy.event.listens_for(metadata, "before_create")
+def _set_mysql_charset(metadata, connection, **kw):
+    """Set default charset and collation for MySQL tables."""
+    if connection.dialect.name == 'mysql':
+        connection.execute(text('SET character_set_server = utf8mb4'))
+        connection.execute(text('SET collation_server = utf8mb4_unicode_ci'))
+
+
+# 데이터베이스 연결 시 시간대 설정
+@sqlalchemy.event.listens_for(engine, "connect")
+def set_timezone(dbapi_connection, connection_record):
+    """Set timezone to UTC when connecting to database."""
+    if hasattr(dbapi_connection, "execute"):
+        dbapi_connection.execute("SET time_zone = '+00:00'")
+
 
 # 테이블 생성 대신 검증만 수행하는 함수
 def validate_tables():
@@ -69,16 +92,21 @@ def validate_tables():
 def create_tables():
     """
     Creates all defined tables in the database.
+    First drops existing tables if they exist.
     """
+    # 기존 테이블 삭제
+    metadata.drop_all(engine)
+    print("Existing tables have been dropped.")
+    
+    # 테이블 새로 생성
     metadata.create_all(engine)
     print("Tables have been created successfully.")
+
+# 데이터베이스 객체 생성
+database = databases.Database(config.DATABASE_URL)
 
 # 설정에 따라 테이블 자동 생성 또는 검증만 수행
 if hasattr(config, 'CREATE_TABLES') and config.CREATE_TABLES:
     create_tables()
 else:
     validate_tables()
-
-database = databases.Database(
-    config.DATABASE_URL, force_rollback=config.DB_FORCE_ROLL_BACK
-)
