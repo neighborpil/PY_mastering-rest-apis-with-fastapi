@@ -23,7 +23,8 @@ comment_table = sqlalchemy.Table(
 )
 
 engine = sqlalchemy.create_engine(
-    config.DATABASE_URL
+    config.DATABASE_URL,
+    connect_args={"charset": "utf8mb4"}
     # config.DATABASE_URL, connect_args={"check_same_thread": False}
 )
 
