@@ -12,6 +12,7 @@ class BaseConfig(BaseSettings):
 class GlobalConfig(BaseConfig):
     DATABASE_URL: Optional[str] = None
     DB_FORCE_ROLL_BACK: bool = False
+    CREATE_TABLES: bool = False  # 기본적으로 테이블 생성하지 않음
 
 
 class DevConfig(GlobalConfig):
