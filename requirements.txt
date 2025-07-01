@@ -4,3 +4,4 @@ sqlalchemy
 databases[mysql]
 databases[aiosqlite]
 python-dotenv
+pydantic-settings
