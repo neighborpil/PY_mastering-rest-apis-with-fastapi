@@ -4,6 +4,6 @@
 
 ```
 $ uvicorn storeapi.main:app
-$ uvicorn storeapi.main:app -- reload # 자동 재시작
+uvicorn storeapi.main:app --reload --port 8001 # 자동 재시작
 ```
 
