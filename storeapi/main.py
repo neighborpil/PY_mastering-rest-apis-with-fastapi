@@ -1,7 +1,8 @@
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from asgi_correlation_id import CorrelationIdMiddleware
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -22,9 +23,16 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+app.add_middleware(CorrelationIdMiddleware)
 
 # 정적 파일을 제공하기 위한 디렉토리 마운트
 app.mount("/static", StaticFiles(directory="storeapi/static"), name="static")
+
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request, exc):
+    logger.error(f"HTTPException: {exc.status_code} {exc.detail}")
+    return await http_exception_handler(request, exc)
 
 
 # favicon.ico 요청을 정적 파일로 리다이렉트

@@ -42,8 +42,8 @@ async def get_all_posts():
 async def create_post(comment: CommentIn):
     post = await find_post(comment.post_id)
     if not post:
-        logger.error(f"post with id: {comment.post_id} not found")
-        raise HTTPException(status_code=404, detail="Post not found")
+        # logger.error(f"post with id: {post_id} not found")  # handlling at the exception handler
+        raise HTTPException(status_code=404, detail="Post not found with id: " + str(comment.post_id))
 
     data = comment.dict()
     query = comment_table.insert().values(data)
@@ -71,8 +71,8 @@ async def get_post_with_comments(post_id: int):
     logger.info(f"getting post and its comments with id: {post_id}")
     post = await find_post(post_id)
     if not post:
-        logger.error(f"post with id: {post_id} not found")
-        raise HTTPException(status_code=404, detail="Post not found")
+        # logger.error(f"post with id: {post_id} not found")  # handlling at the exception handler
+        raise HTTPException(status_code=404, detail="Post not found with id: " + str(post_id))
 
     return {
         "post": post,
